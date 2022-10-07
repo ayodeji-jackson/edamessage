@@ -1,21 +1,25 @@
-import { useGoogleOneTapLogin } from "@react-oauth/google";
-import { User } from "../types";
+import { CredentialResponse, GoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
+import { useContext, useEffect } from "react";
 import favicon from '../assets/favicon.png';
-import { useNavigate } from "react-router-dom";
+import { UserContext } from "../context";
 
-export default function Login({ handleLogin }: { handleLogin: (user: User) => void; }) {
-  const navigate = useNavigate();
-  
+export default function Login() {
+  const { user, setUser } = useContext(UserContext);
+
+  const login = async (googleRes: CredentialResponse) => {
+    await fetch(`${import.meta.env.VITE_SERVER_URI}/auth`, {
+      method: 'POST', 
+      credentials: 'include', 
+      mode: 'cors', 
+      body: JSON.stringify({
+        token: googleRes.credential
+      }), 
+      headers: { 'Content-Type': 'application/json' }
+    }).then(async res => setUser(await res.json()));
+  };
+
   useGoogleOneTapLogin({
-    onSuccess: async googleRes => {
-      await fetch(`${import.meta.env.VITE_SERVER_URI}/auth`, {
-        method: 'POST', 
-        body: JSON.stringify({
-          token: googleRes.credential
-        }), 
-        headers: { 'Content-Type': 'application/json' }
-      }).then(async res => handleLogin(await res.json()));
-    }, onError: () => console.log('failed')
+    onSuccess: login, onError: console.log
   });
 
   return (
@@ -24,6 +28,8 @@ export default function Login({ handleLogin }: { handleLogin: (user: User) => vo
         <img src={favicon} className="inline" />
         <p className="font-bold text-xl inline">edamessage</p>
       </div>
+      <GoogleLogin size="medium"
+       onSuccess={login} onError={console.log} />
     </div>
   );
 };
