@@ -41,7 +41,7 @@ app.use(
 
 // auth middleware 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  if (!req.session.userId && req.path != "/api/auth") 
+  if (!req.session?.userId && req.path != "/api/auth") 
     res.status(401).send({});
   else next();
 });
@@ -144,7 +144,7 @@ app.post("/api/convos/:recipientId/", async (req: Request, res: Response) => {
   }
 });
 
-app.get("/api/convos/:recipientId/", async (req: Request, res: Response) => {
+app.get("/api/users/:recipientId/convo", async (req: Request, res: Response) => {
   try {
     const convo = await prisma.convo.findFirst({
       where: {

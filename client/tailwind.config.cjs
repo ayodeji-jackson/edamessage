@@ -9,10 +9,11 @@ module.exports = {
     extend: {
       colors: {
         'custom-orange': 'hsl(23deg 100% 50%)', 
-        'custom-orange-100': 'hsl(33deg 100% 59%)',
-        'custom-orange-200': 'hsl(26deg 100% 50%)', 
-        'custom-orange-300': 'hsl(25deg 100% 49%)', 
-        'custom-orange-400': 'hsl(26deg 100% 49%)', 
+        'custom-orange-100': 'hsl(27deg 100% 95%)',
+        'custom-orange-200': 'hsl(33deg 100% 59%)',
+        'custom-orange-300': 'hsl(26deg 100% 50%)', 
+        'custom-orange-400': 'hsl(25deg 100% 49%)', 
+        'custom-orange-500': 'hsl(26deg 100% 49%)', 
         'custom-grey-100': 'hsl(0deg 0% 31%)',
         'custom-grey-200': 'hsl(0deg 0% 97%)'
       }, 
