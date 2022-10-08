@@ -10,7 +10,7 @@ export default function FindPeople() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_SERVER_URI}/users`, {
+    fetch(`${import.meta.env.VITE_SERVER_URI}/api/users`, {
       mode: "cors",
       credentials: "include"
     })

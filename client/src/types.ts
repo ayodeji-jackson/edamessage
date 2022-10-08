@@ -4,3 +4,8 @@ export interface User {
   picture: string, 
   convosIds: string[]
 }
+
+export interface Message {
+  message: string, 
+  byMe: boolean
+}

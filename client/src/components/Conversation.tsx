@@ -1,12 +1,14 @@
-import { useContext, useEffect, useState } from "react";
+import { FormEvent, useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeftIcon, SendIcon } from "../assets/icons";
 import { SelectedConvo } from "../context";
-import { User } from "../types";
+import { Message, User } from "../types";
+import io from "socket.io-client";
 
 export default function Conversation() {
   const { recipient } = useContext(SelectedConvo);
   const [ convo, setConvo ] = useState<User | null>(null);
+  const [ messages, setMessages ] = useState<Message[]>([]);
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -14,7 +16,7 @@ export default function Conversation() {
     if (recipient) {
       setConvo(recipient);
     } else {
-      fetch(`${import.meta.env.VITE_SERVER_URI}/users/${id}/convo`, {
+      fetch(`${import.meta.env.VITE_SERVER_URI}/api/users/${id}/convo`, {
         credentials: 'include', 
         mode: 'cors'
       }).then(async res => {
@@ -26,7 +28,13 @@ export default function Conversation() {
         }
       })
     }
+
+    const socket = io(`${import.meta.env.VITE_SERVER_URI}`);
   }, []);
+
+  const handleSend = (e: FormEvent) => {
+
+  };
 
   return (
     <>
@@ -40,12 +48,16 @@ export default function Conversation() {
         </span>
       </header>
       <div></div>
-      <div className="fixed bottom-0 w-full p-5 flex items-center gap-4">
-        <input type="text" placeholder="Type a message" className="rounded-full py-4 px-6 text-xs border-slate-300 border w-full" />
-        <button aria-label="send" className="bg-custom-orange-100 rounded-full p-4">
-          <SendIcon className="fill-custom-orange -rotate-45" />
+      <form className="fixed bottom-0 w-full p-5 flex items-center gap-4" onSubmit={ handleSend }>
+        <input type="text" placeholder="Type a message" className="rounded-full py-4 px-6 text-xs border-slate-300 border w-full"
+          name="message" 
+        />
+        <button type="submit" aria-label="send" className="bg-custom-orange-100 rounded-full p-4">
+          <SendIcon svgProps={{className: "-rotate-45"}}
+            pathProps={{ className: "" }} 
+          />
         </button>
-      </div>
+      </form>
     </>
   );
 }
