@@ -2,7 +2,7 @@ import Home from "./components/Home";
 import Login from "./components/Login";
 import FindPeople from "./components/FindPeople";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { SelectedConvo, UserContext } from "./context";
+import { SelectedConvo, UserContext } from "./contexts";
 import { useEffect, useState } from "react";
 import { User } from "./types";
 import { BrowserRouter, Route, Routes } from "react-router-dom";

@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@prisma/client": "^4.4.0",
+    "@quixo3/prisma-session-store": "^3.1.10",
     "express": "^4.18.1",
     "express-session": "^1.17.3",
     "google-auth-library": "^8.5.2",

@@ -1,12 +1,10 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { SelectedConvo } from "../context";
 import { User } from "../types";
 
 export default function FindPeople() {
   const [users, setUsers] = useState<User[]>([]);
   const [searchPhrase, setSearchPhrase] = useState<string>('');
-  const { setRecipient } = useContext(SelectedConvo);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,7 +38,7 @@ export default function FindPeople() {
       <ul className="mt-5 space-y-1">
         { users.map(user => (
           <li key={ user.id }>
-            <Link to={ `/u/${user.id}` } onClick={ () => setRecipient(user) }
+            <Link to={ `/u/${user.id}` }
               className="flex rounded-lg gap-5 p-2 h-16 items-center hover:bg-gray-200 transition-colors"
             >
               <img src={ user.picture } alt={ user.name } referrerPolicy="no-referrer"

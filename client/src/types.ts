@@ -6,6 +6,9 @@ export interface User {
 }
 
 export interface Message {
-  message: string, 
-  byMe: boolean
+  text: string, 
+  senderId: string, 
+  recipientId: string, 
+  convoId?: string, 
+  timestamp: Date
 }

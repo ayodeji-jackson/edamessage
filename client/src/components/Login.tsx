@@ -2,7 +2,7 @@ import { useGoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
 import { useContext } from "react";
 import favicon from '../assets/favicon.png';
 import { GoogleIcon } from "../assets/icons";
-import { UserContext } from "../context";
+import { UserContext } from "../contexts";
 
 export default function Login() {
   const { setUser } = useContext(UserContext);

@@ -1,7 +1,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import * as dotenv from "dotenv";
 import session from "express-session";
-import { PrismaClient } from "@prisma/client";
+import { PrismaSessionStore } from "@quixo3/prisma-session-store";
+import { Convo, PrismaClient, User } from "@prisma/client";
 import { OAuth2Client } from "google-auth-library";
 import { Server } from "socket.io";
 import http from "http";
@@ -19,9 +20,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URI, 
-    credentials: true
-  }
+    origin: process.env.CLIENT_URI,
+    credentials: true,
+  },
 });
 
 app.use(express.json());
@@ -43,8 +44,13 @@ app.use(
   session({
     secret: <string>process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: { maxAge: 1000 * 60 * 60 * 24, sameSite: "lax", path: "/api/" },
+    store: new PrismaSessionStore(prisma, {
+      checkPeriod: 2 * 60 * 1000,
+      dbRecordIdIsSessionId: true,
+      dbRecordIdFunction: undefined,
+    }),
   })
 );
 
@@ -73,41 +79,43 @@ app.get("/api/", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/api/auth", async (req: Request, res: Response) => {
+app.post("/api/auth", (req: Request, res: Response) => {
   try {
-    let { credential, code } = req.body;
+    req.session.regenerate(async () => {
+      let { credential, code } = req.body;
+    
+      const client = new OAuth2Client(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        "postmessage"
+      );
 
-    const client = new OAuth2Client(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      "postmessage"
-    );
+      if (!credential) {
+        const { tokens } = await client.getToken(code);
+        credential = tokens.id_token;
+      }
 
-    if (!credential) {
-      const { tokens } = await client.getToken(code);
-      credential = tokens.id_token;
-    }
+      const { name, email, picture } = await client
+        .verifyIdToken({
+          idToken: credential,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        })
+        .then((ticket) => ticket.getPayload()!);
 
-    const { name, email, picture } = await client
-      .verifyIdToken({
-        idToken: credential,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      })
-      .then((ticket) => ticket.getPayload()!);
+      const user = await prisma.user.upsert({
+        where: { email },
+        update: { name, email, picture },
+        create: {
+          name: <string>name,
+          email: <string>email,
+          picture,
+        },
+      });
 
-    const user = await prisma.user.upsert({
-      where: { email },
-      update: { name, email, picture },
-      create: {
-        name: <string>name,
-        email: <string>email,
-        picture,
-      },
+      // set user session
+      req.session.userId = user.id;
+      res.status(201).send(user);
     });
-
-    // set user session
-    req.session.userId = user.id;
-    res.status(201).send(user);
   } catch (e) {
     res
       .status(500)
@@ -163,7 +171,7 @@ app.get(
   "/api/users/:recipientId/convo",
   async (req: Request, res: Response) => {
     try {
-      const convo = await prisma.convo.findFirst({
+      let result: Convo | User | null = await prisma.convo.findFirst({
         where: {
           partiesIds: {
             equals: [req.params.recipientId, req.session.userId!],
@@ -171,7 +179,13 @@ app.get(
         },
         include: { messages: true },
       });
-      res.status(200).send(convo);
+
+      // return the user if the conversation doesn't exist
+      if (!result) result = await prisma.user.findUnique({
+        where: { id: req.params.recipientId }
+      });
+
+      res.status(200).send(result);
     } catch (e) {
       res
         .status(500)
@@ -181,9 +195,18 @@ app.get(
   }
 );
 
-io.on("connection", socket => {
-  socket.on("message", () => {
-    
+io.on("connection", (socket) => {
+  socket.on("message", async (message) => {
+    await prisma.convo.upsert({
+      where: { id: message.convoId }, 
+      create: {
+
+      }, 
+      update: {
+
+      }
+    })
+    socket.broadcast.emit('message', message);
   });
 });
 
