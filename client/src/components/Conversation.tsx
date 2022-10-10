@@ -24,6 +24,7 @@ export default function Conversation() {
       switch (res.status) {
         case 200:
           setConvo(await res.json());
+          break;
         case 401:
           navigate("/");
       }

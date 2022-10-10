@@ -14,10 +14,11 @@ export default function FindPeople() {
     })
       .then(async res => {
         switch (res.status) {
-          case 401:
-            navigate("/");
           case 200:
             setUsers(await res.json());
+            break;
+          case 401:
+            navigate("/");
         }
       });
   }, []);

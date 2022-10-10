@@ -1,10 +1,19 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { GearIcon, PlusIcon, AngleIcon, PencilIcon, StarIcon, SearchIcon } from "../assets/icons";
 import { UserContext } from "../contexts";
+import { Conversation } from "../types";
 
 export default function Home() {
   const { user } = useContext(UserContext);
+  const [ convos, setConvos ] = useState<Conversation[]>([]);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_SERVER_URI}/api/convos`, {
+      credentials: 'include', 
+      mode: 'cors', 
+    }).then(async res => setConvos(await res.json()));
+  }, []);
 
   return (
     <>
@@ -37,6 +46,16 @@ export default function Home() {
           </span>
           <input className="my-6 placeholder:italic block bg-custom-grey-200 w-full rounded-xl py-4 pl-14 pr-3 text-sm" placeholder="Search here..." type="search" name="search" />
         </label>
+        <div>
+          {
+            !convos.length ? <p>Tap <PencilIcon /> at the top to start a conversation</p> : 
+            convos.map(convo => (
+              <div key={ convo.id }>
+                
+              </div>
+            ))
+          }
+        </div>
       </main>
     </>
   );

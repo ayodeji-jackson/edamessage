@@ -146,26 +146,28 @@ app.get("/api/users", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/api/convos/:recipientId/", async (req: Request, res: Response) => {
+app.get("/api/convos", async (req: Request, res: Response) => {
   try {
-    // create new convo, setting parties as sender and recipient
-    const convo = await prisma.convo.create({
-      data: {
-        parties: {
-          connect: [{ id: req.params.recipientId }, { id: req.session.userId }],
-        },
-      },
-      include: { parties: true },
+    const convos = await prisma.convo.findMany({
+      where: {
+        partiesIds: {
+          has: req.session.userId
+        }
+      }, 
+      select: {
+        messages: true, 
+        parties: true, 
+        picture: true, 
+        isGroup: true
+      }
     });
 
-    res.status(201).send(convo);
+    res.status(200).send(convos);
   } catch (e) {
-    res
-      .status(500)
-      .send({ message: "An error occured", error: (<Error>e).message });
+    res.status(500).send({ message: "An error occured", error: (<Error>e).message });
     console.error(e);
   }
-});
+})
 
 app.get(
   "/api/users/:recipientId/convo",
@@ -197,15 +199,32 @@ app.get(
 
 io.on("connection", (socket) => {
   socket.on("message", async (message) => {
-    await prisma.convo.upsert({
-      where: { id: message.convoId }, 
-      create: {
-
-      }, 
-      update: {
-
-      }
-    })
+    const convo = await prisma.convo.findUnique({
+      where: { id: message.convoId }
+    });
+    if (convo) {
+      await prisma.message.create({
+        data: {
+          text: message.text, 
+          convoId: message.convoId, 
+          timestamp: message.timestamp, 
+          senderId: message.senderId
+        }
+      });
+    } else {
+      await prisma.convo.create({
+        data: {
+          messages: {
+            create: {
+              text: message.text, 
+              timestamp: message.timestamp, 
+              senderId: message.senderId
+            }
+          }, 
+          partiesIds: [ message.senderId, message.recipientId ]
+        }
+      });
+    }
     socket.broadcast.emit('message', message);
   });
 });
