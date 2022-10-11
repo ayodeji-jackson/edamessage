@@ -40,7 +40,7 @@ export default function FindPeople() {
         { users.map(user => (
           <li key={ user.id }>
             <Link to={ `/u/${user.id}` }
-              className="flex rounded-lg gap-5 p-2 h-16 items-center hover:bg-gray-200 transition-colors"
+              className="conversations-list-item"
             >
               <img src={ user.picture } alt={ user.name } referrerPolicy="no-referrer"
                 className="rounded-full h-full"

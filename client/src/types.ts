@@ -13,9 +13,10 @@ export interface Message {
   timestamp: Date
 }
 
-export interface Conversation {
+export interface Convo {
   id: string, 
-  messages: string[], 
+  name?: string, 
+  messages: Message[], 
   parties: User[], 
   picture?: string, 
   isGroup: boolean

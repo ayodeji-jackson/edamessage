@@ -155,6 +155,7 @@ app.get("/api/convos", async (req: Request, res: Response) => {
         }
       }, 
       select: {
+        id: true, 
         messages: true, 
         parties: true, 
         picture: true, 
@@ -176,13 +177,13 @@ app.get(
       let result: Convo | User | null = await prisma.convo.findFirst({
         where: {
           partiesIds: {
-            equals: [req.params.recipientId, req.session.userId!],
+            equals: [req.session.userId, req.params.recipientId].sort(),
           },
         },
-        include: { messages: true },
+        include: { messages: true, parties: true },
       });
 
-      // return the user if the conversation doesn't exist
+      // respond with the user if the conversation doesn't exist
       if (!result) result = await prisma.user.findUnique({
         where: { id: req.params.recipientId }
       });
@@ -221,7 +222,7 @@ io.on("connection", (socket) => {
               senderId: message.senderId
             }
           }, 
-          partiesIds: [ message.senderId, message.recipientId ]
+          partiesIds: [ message.senderId, message.recipientId ].sort()
         }
       });
     }

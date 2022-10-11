@@ -15,6 +15,7 @@ model Convo {
   messages   Message[]
   parties    User[]    @relation(fields: [partiesIds], references: [id])
   partiesIds String[]  @db.ObjectId
+  name       String?
   isGroup    Boolean   @default(false)
   picture    String?
 }

@@ -2,14 +2,14 @@ import { FormEvent, useContext, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeftIcon, SendIcon } from "../assets/icons";
 import { UserContext } from "../contexts";
-import { Message, User } from "../types";
+import { Convo, Message, User } from "../types";
 import io from "socket.io-client";
 
-const socket = io(`${import.meta.env.VITE_SERVER_URI}`);
+const socket = io(import.meta.env.VITE_SERVER_URI);
 
 export default function Conversation() {
   const { user } = useContext(UserContext);
-  const [convo, setConvo] = useState<User | null>(null);
+  const [recipient, setRecipient] = useState<User | Convo | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const { id } = useParams();
   const navigate = useNavigate();
@@ -23,17 +23,21 @@ export default function Conversation() {
     }).then(async res => {
       switch (res.status) {
         case 200:
-          setConvo(await res.json());
+          setRecipient(await res.json());
           break;
         case 401:
           navigate("/");
       }
-    });
+    })
   }, []);
 
   useEffect(() => {
     dummy.current?.scrollIntoView({ behavior: "smooth", block: 'end' });
-  }, [messages])
+  }, [messages, recipient]);
+
+  useEffect(() => {
+    if (recipient && 'messages' in recipient!) setMessages(recipient.messages);
+  }, [recipient])
 
   socket.on('message', (message: Message) => {
     setMessages([...messages, message]);
@@ -45,7 +49,7 @@ export default function Conversation() {
         text: message.trim(),
         senderId: user?.id!, 
         recipientId: id!, 
-        convoId: convo?.id, 
+        convoId: recipient?.id, 
         timestamp: new Date()
       };
       setMessages([...messages, messageData]);
@@ -66,8 +70,19 @@ export default function Conversation() {
           <ArrowLeftIcon className="w-6 h-6" />
         </button>
         <span className="flex gap-4 items-center">
-          <img className="rounded-full w-12 h-12" src={convo?.picture} alt={convo?.name} referrerPolicy="no-referrer" />
-          <p className="font-bold">{convo?.name}</p>
+          {
+            (() => {
+              const picture: string = recipient?.picture || (recipient as Convo)?.parties.filter(party => party.id !== user?.id)[0].picture;
+              const name: string = recipient?.name || (recipient as Convo)?.parties.filter(party => party.id !== user?.id)[0].name;
+
+              return (
+                <>
+                  <img className="rounded-full w-12 h-12" src={picture} alt={name} referrerPolicy="no-referrer" />
+                  <p className="font-bold">{name}</p>
+                </>
+              )
+            })()
+          }
         </span>
       </header>
       <div className="h-[calc(100vh_-_9rem)] p-3 pb-0 overflow-y-auto">
