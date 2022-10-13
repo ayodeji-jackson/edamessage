@@ -8,15 +8,14 @@ export interface User {
 export interface Message {
   text: string, 
   senderId: string, 
-  recipientId: string, 
-  convoId?: string, 
+  convoOrRecipientId?: string, 
   timestamp: Date
 }
 
 export interface Convo {
   id: string, 
   name?: string, 
-  messages: Message[], 
+  messages: Message[],
   parties: User[], 
   picture?: string, 
   isGroup: boolean

@@ -24,15 +24,15 @@ export default function FindPeople() {
   }, []);
 
   return (
-    <div className="p-3 flex flex-col">
+    <div className="p-4 flex flex-col">
       <header className="flex items-center gap-6">
-        <button onClick={() => navigate(-1)} className="text-2xl">✕</button>
+        <button onClick={() => navigate(-1)} className="text-2xl leading-none h-8 w-8 rounded-full grey-on-hover">✕</button>
         <h1 className="">New Conversation</h1>
       </header>
       <input type="search" placeholder="Search edamessage by name or email"
         value={searchPhrase}
         onChange={e => setSearchPhrase(e.target.value)}
-        className="text-xs p-2 bg-custom-grey-200 rounded-lg pr-3 my-3"
+        className="text-xs p-4 bg-custom-grey-200 rounded-lg my-3"
       />
       <hr />
       <h2 className="text-sm my-3">New on edamessage</h2>

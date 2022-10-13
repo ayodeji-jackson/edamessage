@@ -1,11 +1,9 @@
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { io } from "socket.io-client";
 import { GearIcon, PlusIcon, AngleIcon, PencilIcon, StarIcon, SearchIcon } from "../assets/icons";
 import { UserContext } from "../contexts";
 import { Convo, Message } from "../types";
-
-const socket = io(import.meta.env.VITE_SERVER_URI);
+import { socket } from '../App';
 
 export default function Home() {
   const { user } = useContext(UserContext);
@@ -21,8 +19,17 @@ export default function Home() {
   socket.on("message", (message: Message) => {
     // show new messages on home screen in real time
     const newConvos = convos.slice(0);
-    newConvos.find(convo => convo.id === message.convoId)?.messages.push(message);
-    setConvos(newConvos);
+    const convoToChange = newConvos.find(convo => convo.id === message.convoOrRecipientId);
+    if (convoToChange) {
+      convoToChange.messages.push(message);
+      setConvos(newConvos);
+    } else {
+      fetch(`${import.meta.env.VITE_SERVER_URI}/api/convos/${message.convoOrRecipientId}`, {
+        credentials: 'include', 
+        mode: 'cors',
+      }).then(async res => setConvos([...convos, await res.json()]))
+    }
+    
   });
 
   return (
@@ -76,7 +83,7 @@ export default function Home() {
                     </div>
                     <div className="text-xs flex gap-2 flex-col ml-auto mr-5 items-end">
                       <span className="block text-gray-600">{  }</span>
-                      <span className="text-white bg-custom-orange rounded-full px-2 py-1 w-fit">{ }</span>
+                      { <span className="text-white bg-custom-orange rounded-full px-2 py-1 w-fit">{  }</span> }
                     </div>
                   </Link>
                 </div>

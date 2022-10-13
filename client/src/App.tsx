@@ -3,13 +3,23 @@ import Login from "./components/Login";
 import FindPeople from "./components/FindPeople";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { UserContext } from "./contexts";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User } from "./types";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Conversation from "./components/Conversation";
+import io from "socket.io-client";
+
+export const socket = io(import.meta.env.VITE_SERVER_URI, { autoConnect: false });
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      socket.auth = { userId: user?.id };
+      socket.connect();
+    }
+  }, [user]);
 
   return (
     <BrowserRouter>

@@ -3,9 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeftIcon, SendIcon } from "../assets/icons";
 import { UserContext } from "../contexts";
 import { Convo, Message, User } from "../types";
-import io from "socket.io-client";
-
-const socket = io(import.meta.env.VITE_SERVER_URI);
+import { socket } from '../App';
 
 export default function Conversation() {
   const { user } = useContext(UserContext);
@@ -28,7 +26,7 @@ export default function Conversation() {
         case 401:
           navigate("/");
       }
-    })
+    });
   }, []);
 
   useEffect(() => {
@@ -37,19 +35,22 @@ export default function Conversation() {
 
   useEffect(() => {
     if (recipient && 'messages' in recipient!) setMessages(recipient.messages);
-  }, [recipient])
+    
+  }, [recipient]);
 
   socket.on('message', (message: Message) => {
-    setMessages([...messages, message]);
+    if (message.convoOrRecipientId === user?.id 
+      || message.convoOrRecipientId === recipient?.id
+    ) 
+      setMessages([...messages, message]);
   });
 
   const sendMessage = () => {
     if (message.trim()) {
       const messageData: Message = {
         text: message.trim(),
-        senderId: user?.id!, 
-        recipientId: id!, 
-        convoId: recipient?.id, 
+        senderId: user?.id!,
+        convoOrRecipientId: recipient?.id, 
         timestamp: new Date()
       };
       setMessages([...messages, messageData]);
@@ -66,7 +67,7 @@ export default function Conversation() {
   return (
     <>
       <header className="flex py-4 pl-1 pr-7 bg-white items-center border-b-custom-grey-200 border-b-2 w-full">
-        <button onClick={() => navigate(-1)}>
+        <button className="grey-on-hover rounded-full p-1" onClick={() => navigate(-1)}>
           <ArrowLeftIcon className="w-6 h-6" />
         </button>
         <span className="flex gap-4 items-center">

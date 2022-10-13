@@ -24,6 +24,7 @@ const io = new Server(server, {
     credentials: true,
   },
 });
+const users = new Map<string, string>();
 
 app.use(express.json());
 
@@ -168,6 +169,28 @@ app.get("/api/convos", async (req: Request, res: Response) => {
     res.status(500).send({ message: "An error occured", error: (<Error>e).message });
     console.error(e);
   }
+});
+
+app.get("/api/convos/:convoId", async (req: Request, res: Response) => {
+  try {
+    const convo = await prisma.convo.findUnique({
+      where: {
+        id: req.params.convoId
+      }, 
+      select: {
+        id: true, 
+        messages: true, 
+        parties: true, 
+        picture: true, 
+        isGroup: true
+      }
+    });
+
+    res.status(200).send(convo);
+  } catch (e) {
+    res.status(500).send({ message: 'An error occured', error: (<Error>e).message });
+    console.error(e);
+  }
 })
 
 app.get(
@@ -199,21 +222,28 @@ app.get(
 );
 
 io.on("connection", (socket) => {
+  // map db id of users to their respective socket ids
+  for (let [id, socket] of io.of('/').sockets) {
+    users.set(socket.handshake.auth.userId, id);
+  }
+
   socket.on("message", async (message) => {
     const convo = await prisma.convo.findUnique({
-      where: { id: message.convoId }
+      where: { id: message.convoOrRecipientId }
     });
     if (convo) {
       await prisma.message.create({
         data: {
           text: message.text, 
-          convoId: message.convoId, 
+          convoId: message.convoOrRecipientId, 
           timestamp: message.timestamp, 
           senderId: message.senderId
         }
       });
+      const recipient = convo.partiesIds.filter(id => id !== message.senderId)[0];
+      socket.to(users.get(recipient)!).emit('message', message);
     } else {
-      await prisma.convo.create({
+      const newConvo = await prisma.convo.create({
         data: {
           messages: {
             create: {
@@ -222,11 +252,11 @@ io.on("connection", (socket) => {
               senderId: message.senderId
             }
           }, 
-          partiesIds: [ message.senderId, message.recipientId ].sort()
+          partiesIds: [ message.senderId, message.convoOrRecipientId ].sort()
         }
       });
+      socket.to(users.get(message.convoOrRecipientId)!).emit('message', { ...message, convoOrRecipientId: newConvo.id });
     }
-    socket.broadcast.emit('message', message);
   });
 });
 
