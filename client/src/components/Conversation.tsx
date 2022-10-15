@@ -2,26 +2,26 @@ import { FormEvent, useContext, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeftIcon, SendIcon } from "../assets/icons";
 import { UserContext } from "../contexts";
-import { Convo, Message, User } from "../types";
+import { Convo, Message } from "../types";
 import { socket } from '../App';
 
 export default function Conversation() {
   const { user } = useContext(UserContext);
-  const [recipient, setRecipient] = useState<User | Convo | null>(null);
+  const [convo, setConvo] = useState<Convo | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const { id } = useParams();
+  const { recipientId } = useParams();
   const navigate = useNavigate();
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState<string>('');
   const dummy = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_SERVER_URI}/api/users/${id}/convo`, {
+    fetch(`${import.meta.env.VITE_SERVER_URI}/api/users/${recipientId}/convo`, {
       credentials: 'include',
       mode: 'cors'
     }).then(async res => {
       switch (res.status) {
         case 200:
-          setRecipient(await res.json());
+          setConvo(await res.json());
           break;
         case 401:
           navigate("/");
@@ -30,19 +30,15 @@ export default function Conversation() {
   }, []);
 
   useEffect(() => {
-    dummy.current?.scrollIntoView({ behavior: "smooth", block: 'end' });
-  }, [messages, recipient]);
+    if (convo) setMessages(convo.messages);
+  }, [convo]);
 
   useEffect(() => {
-    if (recipient && 'messages' in recipient!) setMessages(recipient.messages);
-    
-  }, [recipient]);
+    dummy.current?.scrollIntoView({ behavior: "smooth", block: 'end' });
+  }, [messages, convo]);
 
-  socket.on('message', (message: Message) => {
-    if (message.convoOrRecipientId === user?.id 
-      || message.convoOrRecipientId === recipient?.id
-    ) 
-      setMessages([...messages, message]);
+  socket.on('message', (inMessage: Message) => {
+    setMessages([...messages, inMessage]);
   });
 
   const sendMessage = () => {
@@ -50,7 +46,7 @@ export default function Conversation() {
       const messageData: Message = {
         text: message.trim(),
         senderId: user?.id!,
-        convoOrRecipientId: recipient?.id, 
+        recipientId, 
         timestamp: new Date()
       };
       setMessages([...messages, messageData]);
@@ -73,8 +69,8 @@ export default function Conversation() {
         <span className="flex gap-4 items-center">
           {
             (() => {
-              const picture: string = recipient?.picture || (recipient as Convo)?.parties.filter(party => party.id !== user?.id)[0].picture;
-              const name: string = recipient?.name || (recipient as Convo)?.parties.filter(party => party.id !== user?.id)[0].name;
+              const picture: string = convo?.picture || convo?.parties.filter(party => party.id !== user?.id)[0].picture!;
+              const name: string = convo?.name || convo?.parties.filter(party => party.id !== user?.id)[0].name!;
 
               return (
                 <>
@@ -88,15 +84,14 @@ export default function Conversation() {
       </header>
       <div className="h-[calc(100vh_-_9rem)] p-3 pb-0 overflow-y-auto">
         {
-          messages.map((message, i, arr) => (
-            <div className={`text-sm px-4 break-words py-2 w-fit max-w-[90%] rounded-b-3xl ${message.senderId === user?.id ? 'rounded-tl-3xl bg-custom-orange ml-auto text-white' : 'rounded-tr-3xl border-slate-300 border-2'} ${arr[i + 1]?.senderId === message.senderId ? 'mb-[2px]' : 'mb-5'}`} key={i}>{message.text}</div>
+          messages.map((message, i) => (
+            <div className={`text-sm px-4 break-words py-2 w-fit max-w-[90%] rounded-b-3xl ${message.senderId === user?.id ? 'rounded-tl-3xl bg-custom-orange ml-auto text-white' : 'rounded-tr-3xl border-slate-300 border-2'} ${messages[i + 1]?.senderId === message.senderId ? 'mb-[2px]' : 'mb-5'}`} key={message.id || i}>{message.text}</div>
           ))
         }
         <div ref={ dummy }></div>
       </div>
       <form className="w-full p-3 pt-0 flex items-center gap-4 bg-white" onSubmit={handleSend}>
         <input placeholder="Type a message" value={message} onChange={e => setMessage(e.target.value)}
-          onKeyUp={e => e.key === 'Enter' && !e.ctrlKey ? sendMessage() : true}
           className="rounded-full py-4 px-6 text-xs border-slate-300 border w-full resize-none"
         />
         <button type="submit" aria-label="send" className="bg-custom-orange-100 rounded-full p-4">

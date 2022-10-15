@@ -6,9 +6,10 @@ export interface User {
 }
 
 export interface Message {
+  id?: string, 
   text: string, 
   senderId: string, 
-  convoOrRecipientId?: string, 
+  recipientId?: string, 
   timestamp: Date
 }
 
@@ -17,6 +18,7 @@ export interface Convo {
   name?: string, 
   messages: Message[],
   parties: User[], 
+  partiesIds: string[], 
   picture?: string, 
   isGroup: boolean
 }

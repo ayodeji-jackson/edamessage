@@ -171,40 +171,18 @@ app.get("/api/convos", async (req: Request, res: Response) => {
   }
 });
 
-app.get("/api/convos/:convoId", async (req: Request, res: Response) => {
-  try {
-    const convo = await prisma.convo.findUnique({
-      where: {
-        id: req.params.convoId
-      }, 
-      select: {
-        id: true, 
-        messages: true, 
-        parties: true, 
-        picture: true, 
-        isGroup: true
-      }
-    });
-
-    res.status(200).send(convo);
-  } catch (e) {
-    res.status(500).send({ message: 'An error occured', error: (<Error>e).message });
-    console.error(e);
-  }
-})
-
 app.get(
   "/api/users/:recipientId/convo",
   async (req: Request, res: Response) => {
     try {
-      let result: Convo | User | null = await prisma.convo.findFirst({
+      let result: Convo | User | null = await prisma.convo.findMany({
         where: {
           partiesIds: {
-            equals: [req.session.userId, req.params.recipientId].sort(),
+            hasEvery: [ req.session.userId, req.params.recipientId ]
           },
         },
         include: { messages: true, parties: true },
-      });
+      }).then(convos => convos.find(convo => convo.partiesIds.length == 2)!);
 
       // respond with the user if the conversation doesn't exist
       if (!result) result = await prisma.user.findUnique({
@@ -228,22 +206,30 @@ io.on("connection", (socket) => {
   }
 
   socket.on("message", async (message) => {
-    const convo = await prisma.convo.findUnique({
-      where: { id: message.convoOrRecipientId }
-    });
+    const convo = await prisma.convo.findMany({
+      where: {
+        partiesIds: {
+          hasEvery: [ message.senderId, message.recipientId ]
+        },
+      },
+      include: { messages: true, parties: true },
+    }).then(convos => convos.find(convo => convo.partiesIds.length == 2)!);
+
     if (convo) {
-      await prisma.message.create({
+      await prisma.convo.update({
+        where: { id: convo.id }, 
         data: {
-          text: message.text, 
-          convoId: message.convoOrRecipientId, 
-          timestamp: message.timestamp, 
-          senderId: message.senderId
+          messages: {
+            create: {
+              text: message.text, 
+              timestamp: message.timestamp, 
+              senderId: message.senderId
+            }
+          }
         }
       });
-      const recipient = convo.partiesIds.filter(id => id !== message.senderId)[0];
-      socket.to(users.get(recipient)!).emit('message', message);
     } else {
-      const newConvo = await prisma.convo.create({
+      await prisma.convo.create({
         data: {
           messages: {
             create: {
@@ -252,11 +238,17 @@ io.on("connection", (socket) => {
               senderId: message.senderId
             }
           }, 
-          partiesIds: [ message.senderId, message.convoOrRecipientId ].sort()
+          parties: {
+            connect: [
+              { id: message.senderId }, 
+              { id: message.recipientId }
+            ]
+          }
         }
       });
-      socket.to(users.get(message.convoOrRecipientId)!).emit('message', { ...message, convoOrRecipientId: newConvo.id });
     }
+
+    socket.to(users.get(message.recipientId)!).emit('message', message);
   });
 });
 

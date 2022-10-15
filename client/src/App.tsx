@@ -34,7 +34,7 @@ function App() {
             <Route path="/new"
               element={<FindPeople />}
             />
-            <Route path="/u/:id"
+            <Route path="/u/:recipientId"
               element={<Conversation />}
             />
           </Routes>

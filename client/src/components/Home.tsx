@@ -14,23 +14,27 @@ export default function Home() {
       credentials: 'include', 
       mode: 'cors', 
     }).then(async res => setConvos(await res.json()));
+
+    socket.on("message", (message: Message) => {
+      // show new messages on home screen in real time
+      const changeConvo = convos.find(
+        convo => [message.senderId, message.recipientId].every(val => convo.partiesIds.includes(val!))
+      );
+  
+      if (changeConvo) {
+        changeConvo.messages.push(message);
+        setConvos([ ...convos, changeConvo ]);
+      } else {
+        fetch(`${import.meta.env.VITE_SERVER_URI}/api/users/${message.recipientId}/convo`, {
+          credentials: 'include', 
+          mode: 'cors',
+        }).then(async res => setConvos([...convos, await res.json()]))
+      }
+      
+    });
   }, []);
   
-  socket.on("message", (message: Message) => {
-    // show new messages on home screen in real time
-    const newConvos = convos.slice(0);
-    const convoToChange = newConvos.find(convo => convo.id === message.convoOrRecipientId);
-    if (convoToChange) {
-      convoToChange.messages.push(message);
-      setConvos(newConvos);
-    } else {
-      fetch(`${import.meta.env.VITE_SERVER_URI}/api/convos/${message.convoOrRecipientId}`, {
-        credentials: 'include', 
-        mode: 'cors',
-      }).then(async res => setConvos([...convos, await res.json()]))
-    }
-    
-  });
+  
 
   return (
     <>
