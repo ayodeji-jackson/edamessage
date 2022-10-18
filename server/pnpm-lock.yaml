@@ -3,9 +3,11 @@ lockfileVersion: 5.4
 specifiers:
   '@prisma/client': ^4.4.0
   '@quixo3/prisma-session-store': ^3.1.10
+  '@types/cors': ^2.8.12
   '@types/express': ^4.17.14
   '@types/express-session': ^1.17.5
   '@types/node': ^18.7.23
+  cors: ^2.8.5
   dotenv: ^16.0.2
   express: ^4.18.1
   express-session: ^1.17.3
@@ -19,12 +21,14 @@ specifiers:
 dependencies:
   '@prisma/client': 4.4.0_prisma@4.4.0
   '@quixo3/prisma-session-store': 3.1.10_ywyqx7acfmjuax6ygli2ihk5mm
+  cors: 2.8.5
   express: 4.18.1
   express-session: 1.17.3
   google-auth-library: 8.5.2
   socket.io: 4.5.2
 
 devDependencies:
+  '@types/cors': 2.8.12
   '@types/express': 4.17.14
   '@types/express-session': 1.17.5
   '@types/node': 18.7.23
@@ -134,7 +138,6 @@ packages:
 
   /@types/cors/2.8.12:
     resolution: {integrity: sha512-vt+kDhq/M2ayberEtJcIN/hxXy1Pk+59g2FV/ZQceeaTyCtCucjL2Q7FXlFjtWn4n15KCr1NE2lNNFhp0lEThw==}
-    dev: false
 
   /@types/express-serve-static-core/4.17.31:
     resolution: {integrity: sha512-DxMhY+NAsTwMMFHBTtJFNp5qiHKJ7TeqOo23zVEM9alT1Ml27Q3xcTH0xwxn7Q0BbMcVEJOs/7aQtUWupUQN3Q==}

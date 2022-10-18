@@ -21,22 +21,37 @@ export default function Conversation() {
     }).then(async (res) => {
       switch (res.status) {
         case 200:
-          setConvo(await res.json());
+          const response: Convo = await res.json();
+          setConvo(response);
+          setMessages(response.messages || []);
           break;
         case 401:
           navigate("/");
       }
     });
 
-    socket.on("message", (inMessage: Message) => {
-      setMessages([...messages, inMessage]);
-      console.log('incoming');
-    });
+    return () => {
+      socket.off("message");
+    };
   }, []);
 
   useEffect(() => {
-    if (convo) setMessages(convo.messages || []);
-  }, [convo]);
+    socket.on("message", (inMessage: Message) => {
+      if (recipientId === inMessage.senderId) {
+        setMessages([...messages, inMessage]);
+        fetch(
+          `${import.meta.env.VITE_SERVER_URI}/api/users/${recipientId}/convo`,
+          {
+            credentials: "include",
+            mode: "cors",
+            headers: {
+              "No-Content": "true",
+            },
+          }
+        );
+      }
+    });
+  }, [messages]);
 
   useEffect(() => {
     dummy.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -78,7 +93,8 @@ export default function Conversation() {
                 .picture!;
             const name: string =
               convo?.name ||
-              convo?.parties.filter((party) => party.id !== currentUser?.id)[0].name!;
+              convo?.parties.filter((party) => party.id !== currentUser?.id)[0]
+                .name!;
 
             return (
               <>

@@ -22,25 +22,24 @@ export default function Home() {
       mode: "cors",
     }).then(async (res) => setConvos(await res.json()));
 
+    return () => {
+      socket.off("message");
+    };
+  }, []);
+
+  useEffect(() => {
     socket.on("message", (message: Message) => {
       // show new messages on home screen in real time
-      console.log(convos);
-      const changeConvo = convos.find((convo) =>
-        [message.senderId, message.recipientId].every((val) =>
-          convo.partiesIds.includes(val!)
-        )
-      );
+      const convosCopy = convos.slice(0);
 
-      console.log(message.senderId, message.recipientId);
-
-      if (changeConvo) {
-        changeConvo.messages.push(message);
-        setConvos([...convos, changeConvo]);
-      } else {
-        setConvos([...convos, message.convo!])
-      }
+      if (convosCopy.find((convo) => convo.id === message.convo?.id)) {
+        convosCopy
+          .find((convo) => convo.id === message.convo?.id)
+          ?.messages.push(message);
+        setConvos(convosCopy);
+      } else setConvos([...convos, message.convo!]);
     });
-  }, []);
+  }, [convos]);
 
   return (
     <>
@@ -102,7 +101,9 @@ export default function Home() {
             convos.map((convo) => {
               const recipient = convo.isGroup
                 ? convo
-                : convo.parties.filter((party) => party.id !== currentUser?.id)[0];
+                : convo.parties.filter(
+                    (party) => party.id !== currentUser?.id
+                  )[0];
               return (
                 <div key={convo.id}>
                   <Link
@@ -129,11 +130,18 @@ export default function Home() {
                     </div>
                     <div className="text-xs flex gap-2 flex-col ml-auto mr-5 items-end">
                       <span className="block text-gray-600">{}</span>
-                      { !convo.readBy.map(user => user.id).includes(currentUser?.id!) &&
+                      {!convo.messages[
+                        convo.messages.length - 1
+                      ].readByIds?.includes(currentUser?.id!) && (
                         <span className="text-white bg-custom-orange rounded-full px-2 py-1 w-fit">
-                          {convo.messages.slice(convo.messages.findIndex(m => m.senderId !== currentUser!.id)).length}
+                          {
+                            convo.messages.filter(
+                              (msg) =>
+                                !msg.readByIds?.includes(currentUser?.id!)
+                            ).length
+                          }
                         </span>
-                      }
+                      )}
                     </div>
                   </Link>
                 </div>

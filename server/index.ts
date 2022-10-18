@@ -6,6 +6,7 @@ import { Convo, PrismaClient, User } from "@prisma/client";
 import { OAuth2Client } from "google-auth-library";
 import { Server } from "socket.io";
 import http from "http";
+import cors from "cors";
 
 declare module "express-session" {
   interface Session {
@@ -29,16 +30,12 @@ const users = new Map<string, string>();
 app.use(express.json());
 
 // cors middleware
-app.use((req: Request, res: Response, next: NextFunction) => {
-  res.setHeader("Access-Control-Allow-Origin", process.env.CLIENT_URI!);
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Origin,X-Requested-With,Content-Type,Accept"
-  );
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  next();
-});
+app.use(
+  cors({
+    origin: process.env.CLIENT_URI,
+    credentials: true,
+  })
+);
 
 // session middleware
 app.use(
@@ -147,6 +144,51 @@ app.get("/api/users", async (req: Request, res: Response) => {
   }
 });
 
+app.get(
+  "/api/users/:recipientId/convo",
+  async (req: Request, res: Response) => {
+    try {
+      let result: Convo | User | null = await prisma.convo
+        .findMany({
+          where: {
+            partiesIds: {
+              hasEvery: [req.session.userId, req.params.recipientId],
+            },
+          },
+          include: { messages: true, parties: true },
+        })
+        .then(
+          (convos) => convos.find((convo) => convo.partiesIds.length == 2)!
+        );
+
+      // respond with the user if the conversation doesn't exist
+      if (!result)
+        result = await prisma.user.findUnique({
+          where: { id: req.params.recipientId },
+        });
+      else
+        await prisma.message.updateMany({
+          where: {
+            convoId: result.id,
+            // NOT: { senderId: req.session.userId },
+          },
+          data: {
+            readByIds: {
+              push: req.session.userId,
+            },
+          },
+        });
+
+      if (!req.get("No-Content")) res.status(200).send(result);
+    } catch (e) {
+      res
+        .status(500)
+        .send({ message: "An error occured", error: (<Error>e).message });
+      console.error(e);
+    }
+  }
+);
+
 app.get("/api/convos", async (req: Request, res: Response) => {
   try {
     const convos = await prisma.convo.findMany({
@@ -160,8 +202,7 @@ app.get("/api/convos", async (req: Request, res: Response) => {
         messages: true,
         parties: true,
         picture: true,
-        isGroup: true, 
-        readBy: true, 
+        isGroup: true,
       },
     });
 
@@ -173,48 +214,6 @@ app.get("/api/convos", async (req: Request, res: Response) => {
     console.error(e);
   }
 });
-
-app.get(
-  "/api/users/:recipientId/convo",
-  async (req: Request, res: Response) => {
-    try {
-      let result: Convo | User | null = await prisma.convo
-        .findMany({
-          where: {
-            partiesIds: {
-              hasEvery: [req.session.userId, req.params.recipientId],
-            },
-          },
-          include: { messages: true, parties: true, readBy: true },
-        })
-        .then(
-          (convos) => convos.find((convo) => convo.partiesIds.length == 2)!
-        );
-
-      // respond with the user if the conversation doesn't exist
-      if (!result)
-        result = await prisma.user.findUnique({
-          where: { id: req.params.recipientId },
-        });
-      else 
-        await prisma.convo.update({
-          where: { id: result.id }, 
-          data: {
-            readBy: {
-              connect: { id: req.session.userId }
-            }
-          }
-        });
-
-      res.status(200).send(result);
-    } catch (e) {
-      res
-        .status(500)
-        .send({ message: "An error occured", error: (<Error>e).message });
-      console.error(e);
-    }
-  }
-);
 
 io.on("connection", (socket) => {
   // map db id of users to their respective socket ids
@@ -230,7 +229,7 @@ io.on("connection", (socket) => {
             hasEvery: [message.senderId, message.recipientId],
           },
         },
-        include: { messages: true, parties: true, readBy: true },
+        include: { messages: true, parties: true },
       })
       .then((convos) => convos.find((convo) => convo.partiesIds.length == 2)!);
 
@@ -243,11 +242,11 @@ io.on("connection", (socket) => {
               text: message.text,
               timestamp: message.timestamp,
               senderId: message.senderId,
+              readBy: {
+                connect: { id: message.senderId },
+              },
             },
           },
-          readBy: {
-            connect: { id: message.senderId }
-          }
         },
       });
     } else {
@@ -258,20 +257,22 @@ io.on("connection", (socket) => {
               text: message.text,
               timestamp: message.timestamp,
               senderId: message.senderId,
+              readBy: {
+                connect: { id: message.senderId },
+              },
             },
           },
           parties: {
             connect: [{ id: message.senderId }, { id: message.recipientId }],
-          }, 
-          readBy: {
-            connect: { id: message.senderId }
-          }
+          },
         },
-        include: { messages: true, parties: true, readBy: true }
+        include: { messages: true, parties: true },
       });
     }
 
-    socket.to(users.get(message.recipientId)!).emit("message", { ...message, convo });
+    socket
+      .to(users.get(message.recipientId)!)
+      .emit("message", { ...message, convo });
   });
 });
 

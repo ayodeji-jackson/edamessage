@@ -12,6 +12,7 @@ export interface Message {
   recipientId?: string;
   convo?: Convo;
   timestamp: Date;
+  readByIds?: String[];
 }
 
 export interface Convo {
@@ -22,5 +23,4 @@ export interface Convo {
   partiesIds: string[];
   picture?: string;
   isGroup: boolean;
-  readBy: User[];
 }
