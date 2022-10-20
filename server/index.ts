@@ -144,6 +144,23 @@ app.get("/api/users", async (req: Request, res: Response) => {
   }
 });
 
+app.get('/api/users/:recipientId', async (req: Request, res: Response) => {
+  try {
+    res.status(200).send(await prisma.user.findUnique({
+      where: { id: req.params.recipientId }, 
+      select: {
+        name: true, 
+        picture: true, 
+      }
+    }));
+  } catch (e) {
+      res
+        .status(500)
+        .send({ message: "An error occured", error: (<Error>e).message });
+      console.error(e);
+  }
+});
+
 app.get(
   "/api/users/:recipientId/convo",
   async (req: Request, res: Response) => {

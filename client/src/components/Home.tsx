@@ -11,16 +11,25 @@ import {
 import { UserContext } from "../contexts";
 import { Convo, Message } from "../types";
 import { socket } from "../App";
+import Loader from "./Loader";
+import FetchErrorMessage from "./FetchErrorMessage";
 
 export default function Home() {
   const { currentUser } = useContext(UserContext);
   const [convos, setConvos] = useState<Convo[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isError, setIsError] = useState<boolean>(false);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_SERVER_URI}/api/convos`, {
       credentials: "include",
       mode: "cors",
-    }).then(async (res) => setConvos(await res.json()));
+    })
+      .then(async (res) => {
+        setConvos(await res.json());
+        setIsLoading(false);
+      })
+      .catch(() => setIsError(true));
 
     return () => {
       socket.off("message");
@@ -91,8 +100,12 @@ export default function Home() {
             name="search"
           />
         </label>
+        <div className="grid place-items-center">
+          {isLoading && !isError && <Loader />}
+          {isError && <FetchErrorMessage />}
+        </div>
         <div className="space-y-1">
-          {!convos.length ? (
+          {!isLoading && !isError && !convos.length ? (
             <p className="text-center">
               Tap <PencilIcon className="inline" /> at the top to start a
               conversation
