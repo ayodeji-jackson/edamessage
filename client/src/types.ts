@@ -10,7 +10,7 @@ export interface Message {
   senderId: string;
   recipientId?: string;
   convo?: Convo;
-  timestamp: Date;
+  timestamp: string;
   readByIds?: String[];
 }
 

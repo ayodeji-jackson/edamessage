@@ -13,12 +13,13 @@ import { Convo, Message } from "../types";
 import { socket } from "../App";
 import Loader from "./Loader";
 import FetchErrorMessage from "./FetchErrorMessage";
+import { formatDateTimeFromNow } from "../utils";
 
 export default function Home() {
   const { currentUser } = useContext(UserContext);
   const [convos, setConvos] = useState<Convo[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isError, setIsError] = useState<boolean>(false);
+  const [convosLoading, setConvosLoading] = useState<boolean>(true);
+  const [convosError, setConvosError] = useState<boolean>(false);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_SERVER_URI}/api/convos`, {
@@ -27,9 +28,9 @@ export default function Home() {
     })
       .then(async (res) => {
         setConvos(await res.json());
-        setIsLoading(false);
+        setConvosLoading(false);
       })
-      .catch(() => setIsError(true));
+      .catch(() => setConvosError(true));
 
     return () => {
       socket.off("message");
@@ -95,17 +96,15 @@ export default function Home() {
           </span>
           <input
             className="my-6 placeholder:italic block bg-custom-grey-200 w-full rounded-xl py-4 pl-14 pr-3 text-sm"
-            placeholder="Search here..."
+            placeholder="Search here..." disabled
             type="search"
             name="search"
           />
         </label>
-        <div className="grid place-items-center">
-          {isLoading && !isError && <Loader />}
-          {isError && <FetchErrorMessage />}
-        </div>
+        {convosLoading && !convosError && <Loader />}
+        {convosError && <FetchErrorMessage />}
         <div className="space-y-1">
-          {!isLoading && !isError && !convos.length ? (
+          {!convosLoading && !convosError && !convos.length ? (
             <p className="text-center">
               Tap <PencilIcon className="inline" /> at the top to start a
               conversation
@@ -133,7 +132,7 @@ export default function Home() {
                       referrerPolicy="no-referrer"
                       className="rounded-full h-full"
                     />
-                    <div className="flex gap-2 flex-col">
+                    <div className="grid grid-rows-2 gap-2">
                       <p className="font-bold text-lg">{recipient.name}</p>
                       <p className="text-sm">
                         {convo.messages[convo.messages.length - 1].senderId ===
@@ -141,8 +140,12 @@ export default function Home() {
                         {convo.messages[convo.messages.length - 1].text}
                       </p>
                     </div>
-                    <div className="text-xs flex gap-2 flex-col ml-auto mr-5 items-end">
-                      <span className="block text-gray-600">{}</span>
+                    <div className="text-xs grid grid-rows-2 place-items-center gap-2 ml-auto mr-5 items-end">
+                      <span className="block text-gray-600">
+                        {formatDateTimeFromNow(
+                          new Date(convo.messages[convo.messages.length - 1].timestamp)
+                        )}
+                      </span>
                       {!convo.messages[
                         convo.messages.length - 1
                       ].readByIds?.includes(currentUser?.id!) && (

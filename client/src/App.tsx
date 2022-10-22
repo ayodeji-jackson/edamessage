@@ -15,8 +15,8 @@ export const socket = io(import.meta.env.VITE_SERVER_URI, {
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isError, setIsError] = useState<boolean>(false);
+  const [googleIsLoading, setGoogleIsLoading] = useState<boolean>(true);
+  const [googleError, setGoogleError] = useState<boolean>(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -30,13 +30,19 @@ function App() {
       <UserContext.Provider value={{ currentUser, setCurrentUser }}>
         <GoogleOAuthProvider
           clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
-          onScriptLoadSuccess={() => setIsLoading(false)}
-          onScriptLoadError={() => setIsError(true)}
+          onScriptLoadSuccess={() => setGoogleIsLoading(false)}
+          onScriptLoadError={() => setGoogleError(true)}
         >
           <Routes>
             <Route
               path="/"
-              element={currentUser ? <Home /> : <Login isLoading={isLoading} isError={isError} />}
+              element={
+                currentUser ? (
+                  <Home />
+                ) : (
+                  <Login isLoading={googleIsLoading} isError={googleError} />
+                )
+              }
             />
             <Route path="/new" element={<FindPeople />} />
             <Route path="/u/:recipientId" element={<Conversation />} />
