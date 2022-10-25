@@ -10,7 +10,7 @@ import {
 } from "./src/configs";
 import cors from "cors";
 import { authMiddleware } from "./src/middlewares";
-import { authController } from "./src/controllers/auth.controller";
+import { authController, homeController } from "./src/controllers/index.controller";
 import {
   allConvosController,
   userOrConvoController,
@@ -32,6 +32,7 @@ app.use(session(sessionOptions));
 app.use(authMiddleware);
 
 // routes
+app.get('/api', homeController);
 app.post("/api/auth", authController);
 app.get("/api/convos", allConvosController);
 app.get("/api/users", allUsersController);

@@ -2,6 +2,10 @@ import { Request, Response } from "express";
 import { LoginTicket, OAuth2Client } from "google-auth-library";
 import { upsertUser } from "../services";
 
+export const homeController = (req: Request, res: Response) => {
+  res.status(200).send({});
+}
+
 export const authController = (req: Request, res: Response) => {
   req.session.regenerate(async () => {
     let { credential, code } = req.body;
