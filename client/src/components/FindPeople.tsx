@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { SERVER_URI } from "../App";
 import { User } from "../types";
 import FetchErrorMessage from "./FetchErrorMessage";
 import Loader from "./Loader";
@@ -12,7 +13,7 @@ export default function FindPeople() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_SERVER_URI}/api/users`, {
+    fetch(`${SERVER_URI}/users`, {
       mode: "cors",
       credentials: "include",
     }).then(async (res) => {

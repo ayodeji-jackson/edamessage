@@ -13,6 +13,8 @@ export const socket = io(import.meta.env.VITE_SERVER_URI, {
   autoConnect: false,
 });
 
+export const SERVER_URI: string = `${import.meta.env.VITE_SERVER_URI}/api`;
+
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [googleIsLoading, setGoogleIsLoading] = useState<boolean>(true);

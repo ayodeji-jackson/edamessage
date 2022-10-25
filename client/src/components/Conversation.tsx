@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeftIcon, SendIcon } from "../assets/icons";
 import { UserContext } from "../contexts";
 import { Convo, Message, User } from "../types";
-import { socket } from "../App";
+import { SERVER_URI, socket } from "../App";
 import Loader from "./Loader";
 import FetchErrorMessage from "./FetchErrorMessage";
 import Blank from "./Blank";
@@ -22,7 +22,7 @@ export default function Conversation() {
   const [pageError, setPageError] = useState<boolean>(false);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_SERVER_URI}/api/users/${recipientId}`, {
+    fetch(`${SERVER_URI}/users/${recipientId}`, {
       credentials: "include",
       mode: "cors",
     })
@@ -38,7 +38,7 @@ export default function Conversation() {
       })
         .catch(() => setPageError(true));
 
-    fetch(`${import.meta.env.VITE_SERVER_URI}/api/users/${recipientId}/convo`, {
+    fetch(`${SERVER_URI}/users/${recipientId}/convo`, {
       credentials: "include",
       mode: "cors",
     })
@@ -47,7 +47,6 @@ export default function Conversation() {
           case 200:
             const response: Convo = await res.json();
             setMessages(response.messages || []);
-            console.log(response.messages);
             setMessagesLoading(false);
             break;
           case 401:
@@ -69,7 +68,7 @@ export default function Conversation() {
         setMessages([...messages, inMessage]);
         // hitting the endpoint again to update message `readBy`
         fetch(
-          `${import.meta.env.VITE_SERVER_URI}/api/users/${recipientId}/convo`,
+          `${SERVER_URI}/users/${recipientId}/convo`,
           {
             credentials: "include",
             mode: "cors",
@@ -120,7 +119,7 @@ export default function Conversation() {
             alt={recipient?.name}
             referrerPolicy="no-referrer"
           />
-          <p className="font-bold">{recipient?.name}</p>
+          <p className="font-bold constrain-ellipsis">{recipient?.name}</p>
         </span>
       </header>
       <div className="h-[calc(100vh_-_9rem)] p-3 pb-0 overflow-y-auto">

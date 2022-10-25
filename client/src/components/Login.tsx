@@ -1,5 +1,6 @@
 import { useGoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
 import { useContext, useState } from "react";
+import { SERVER_URI } from "../App";
 import favicon from "../assets/favicon.png";
 import { GoogleIcon } from "../assets/icons";
 import { UserContext } from "../contexts";
@@ -21,7 +22,7 @@ export default function Login({
   useGoogleOneTapLogin({
     onSuccess: async ({ credential }) => {
       setResLoading(true);
-      await fetch(`${import.meta.env.VITE_SERVER_URI}/api/auth`, {
+      await fetch(`${SERVER_URI}/auth`, {
         method: "POST",
         credentials: "include",
         mode: "cors",
@@ -39,7 +40,7 @@ export default function Login({
   const handleClickLogin = useGoogleLogin({
     onSuccess: async ({ code }) => {
       setResLoading(true);
-      await fetch(`${import.meta.env.VITE_SERVER_URI}/api/auth`, {
+      await fetch(`${SERVER_URI}/auth`, {
         method: "POST",
         credentials: "include",
         mode: "cors",

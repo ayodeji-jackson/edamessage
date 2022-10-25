@@ -19,4 +19,7 @@
   .grey-on-hover {
     @apply focus:bg-gray-200 hover:bg-gray-200 transition-colors;
   }
+  .constrain-ellipsis {
+    @apply overflow-hidden whitespace-nowrap overflow-ellipsis;
+  }
 }

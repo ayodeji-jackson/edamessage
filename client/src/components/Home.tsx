@@ -10,7 +10,7 @@ import {
 } from "../assets/icons";
 import { UserContext } from "../contexts";
 import { Convo, Message } from "../types";
-import { socket } from "../App";
+import { SERVER_URI, socket } from "../App";
 import Loader from "./Loader";
 import FetchErrorMessage from "./FetchErrorMessage";
 import { formatDateTimeFromNow } from "../utils";
@@ -22,7 +22,7 @@ export default function Home() {
   const [convosError, setConvosError] = useState<boolean>(false);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_SERVER_URI}/api/convos`, {
+    fetch(`${SERVER_URI}/convos`, {
       credentials: "include",
       mode: "cors",
     })
@@ -61,13 +61,16 @@ export default function Home() {
           referrerPolicy="no-referrer"
         />
         <div className="ml-auto flex gap-5">
-          <Link
-            to="/"
+          <button
+            disabled
             className="text-white bg-custom-orange h-7 w-7 grid place-items-center rounded-full"
           >
             <PlusIcon className="scale-110" />
-          </Link>
-          <button className="text-custom-orange h-7 w-7 rounded-full border-2 border-solid border-current grid place-items-center">
+          </button>
+          <button
+            disabled
+            className="text-custom-orange h-7 w-7 rounded-full border-2 border-solid border-current grid place-items-center"
+          >
             <GearIcon className="scale-110" />
           </button>
         </div>
@@ -77,14 +80,14 @@ export default function Home() {
           <h1 className="text-xl font-bold bg-gradient-to-r from-custom-orange-300 to-custom-orange-200 bg-clip-text [-webkit-text-fill-color:transparent]">
             Messages
           </h1>
-          <button>
+          <button disabled>
             <AngleIcon className="inline w-4 h-4" />
           </button>
           <span className="ml-auto text-custom-grey-100 flex gap-6">
-            <Link to="/new">
+            <Link to="/new" className="grey-on-hover rounded-full p-1">
               <PencilIcon className="w-6 h-6" />
             </Link>
-            <button>
+            <button disabled>
               <StarIcon className="w-6 h-6" />
             </button>
           </span>
@@ -96,7 +99,8 @@ export default function Home() {
           </span>
           <input
             className="my-6 placeholder:italic block bg-custom-grey-200 w-full rounded-xl py-4 pl-14 pr-3 text-sm"
-            placeholder="Search here..." disabled
+            placeholder="Search here..."
+            disabled
             type="search"
             name="search"
           />
@@ -133,8 +137,8 @@ export default function Home() {
                       className="rounded-full h-full"
                     />
                     <div className="grid grid-rows-2 gap-2">
-                      <p className="font-bold text-lg">{recipient.name}</p>
-                      <p className="text-sm">
+                      <p className="font-bold text-lg constrain-ellipsis">{recipient.name}</p>
+                      <p className="text-sm constrain-ellipsis">
                         {convo.messages[convo.messages.length - 1].senderId ===
                           currentUser?.id && "You: "}
                         {convo.messages[convo.messages.length - 1].text}
@@ -143,7 +147,9 @@ export default function Home() {
                     <div className="text-xs grid grid-rows-2 place-items-center gap-2 ml-auto mr-5 items-end">
                       <span className="block text-gray-600">
                         {formatDateTimeFromNow(
-                          new Date(convo.messages[convo.messages.length - 1].timestamp)
+                          new Date(
+                            convo.messages[convo.messages.length - 1].timestamp
+                          )
                         )}
                       </span>
                       {!convo.messages[
