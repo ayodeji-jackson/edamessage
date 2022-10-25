@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("REMOTE_DATABASE_URL")
+}
+
+model Convo {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  messages   Message[]
+  parties    User[]    @relation(fields: [partiesIds], references: [id])
+  partiesIds String[]  @db.ObjectId
+  name       String?
+  isGroup    Boolean   @default(false)
+  picture    String?
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  text      String
+  convo     Convo    @relation(fields: [convoId], references: [id])
+  convoId   String   @db.ObjectId
+  timestamp DateTime
+  sender    User     @relation(fields: [senderId], references: [id])
+  senderId  String   @db.ObjectId
+  readBy    User[]   @relation("read", references: [id], fields: [readByIds])
+  readByIds String[] @db.ObjectId
+}
+
+model User {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  email           String    @unique
+  picture         String?
+  convos          Convo[]   @relation(fields: [convosIds], references: [id])
+  convosIds       String[]  @db.ObjectId
+  messagesRead    Message[] @relation("read", references: [id], fields: [messagesReadIds])
+  messagesReadIds String[]  @db.ObjectId
+  dateJoined      DateTime  @default(now())
+  messages        Message[]
+}
+
+model Session {
+  objId     String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @unique
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
+}

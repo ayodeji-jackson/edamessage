@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  box-sizing: border-box;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+@layer utilities {
+  .conversations-list-item {
+    @apply flex rounded-lg gap-5 p-2 h-20 items-center grey-on-hover;
+  }
+  .grey-on-hover {
+    @apply focus:bg-gray-200 hover:bg-gray-200 transition-colors;
+  }
+  .constrain-ellipsis {
+    @apply overflow-hidden whitespace-nowrap overflow-ellipsis;
+  }
+}
