@@ -20,7 +20,7 @@ export const sessionOptions: SessionOptions = {
   secret: <string>process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-  cookie: { maxAge: 1000 * 60 * 60 * 24, sameSite: "lax", path: "/api/" },
+  cookie: { maxAge: 1000 * 60 * 60 * 24, sameSite: "none", path: "/api/" },
   store: new PrismaSessionStore(prisma, {
     checkPeriod: 2 * 60 * 1000,
     dbRecordIdIsSessionId: true,
