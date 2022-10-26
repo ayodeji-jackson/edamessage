@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   GearIcon,
   PlusIcon,
@@ -20,6 +20,7 @@ export default function Home() {
   const [convos, setConvos] = useState<Convo[]>([]);
   const [convosLoading, setConvosLoading] = useState<boolean>(true);
   const [convosError, setConvosError] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch(`${SERVER_URI}/convos`, {
@@ -27,8 +28,14 @@ export default function Home() {
       mode: "cors",
     })
       .then(async (res) => {
-        setConvos(await res.json());
-        setConvosLoading(false);
+        switch (res.status) {
+          case 200:
+            setConvos(await res.json());
+            setConvosLoading(false);
+            break;
+          case 401:
+            navigate("/");
+        }
       })
       .catch(() => setConvosError(true));
 
@@ -137,7 +144,9 @@ export default function Home() {
                       className="rounded-full h-full"
                     />
                     <div className="grid grid-rows-2 gap-2">
-                      <p className="font-bold text-lg constrain-ellipsis">{recipient.name}</p>
+                      <p className="font-bold text-lg constrain-ellipsis">
+                        {recipient.name}
+                      </p>
                       <p className="text-sm constrain-ellipsis">
                         {convo.messages[convo.messages.length - 1].senderId ===
                           currentUser?.id && "You: "}
