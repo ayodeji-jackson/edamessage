@@ -60,9 +60,9 @@ export default function Login({
   else if (resError) return <Blank><FetchErrorMessage /></Blank>;
 
   return (
-    <div className="grid place-items-center h-screen">
+    <div className="grid place-items-center h-screen px-4">
       <div className="flex flex-col gap-7 items-center">
-        <div className="space-x-5">
+        <div className="flex gap-5 items-center justify-center flex-wrap">
           <img src={favicon} className="inline" />
           <p className="font-bold text-2xl inline">edamessage</p>
         </div>
