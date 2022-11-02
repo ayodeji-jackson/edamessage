@@ -1,13 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaSessionStore } from "@quixo3/prisma-session-store";
 import { CorsOptions } from "cors";
-import * as dotenv from "dotenv";
 import express from "express";
 import { SessionOptions } from "express-session";
 import { Server } from "socket.io";
 import http from "http";
 
-dotenv.config();
+if (process.env.NODE_ENV === 'development') {
+  import('dotenv').then(dotenv => 
+    dotenv.config()
+  );
+}
 
 export const corsOptions: CorsOptions = {
   origin: process.env.CLIENT_URI,
