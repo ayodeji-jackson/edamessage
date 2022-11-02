@@ -6,10 +6,16 @@ import { SessionOptions } from "express-session";
 import { Server } from "socket.io";
 import http from "http";
 
+export const app = express();
+export const server = http.createServer(app);
+export const port = process.env.PORT || 8080;
+
 if (process.env.NODE_ENV === 'development') {
   import('dotenv').then(dotenv => 
     dotenv.config()
   );
+} else {
+  app.set('trust proxy', 1);
 }
 
 export const corsOptions: CorsOptions = {
@@ -36,9 +42,6 @@ export const sessionOptions: SessionOptions = {
   }),
 };
 
-export const app = express();
-export const server = http.createServer(app);
 export const io = new Server(server, {
   cors: corsOptions,
 });
-export const port = process.env.PORT || 8080;
