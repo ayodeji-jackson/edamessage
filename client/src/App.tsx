@@ -16,7 +16,7 @@ export const socket = io(import.meta.env.VITE_SERVER_URI, {
 export const SERVER_URI: string = `${import.meta.env.VITE_SERVER_URI}/api`;
 
 function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(JSON.parse(localStorage.getItem('currentUser')!) as User || null);
   const [googleIsLoading, setGoogleIsLoading] = useState<boolean>(true);
   const [googleError, setGoogleError] = useState<boolean>(false);
 
@@ -24,8 +24,11 @@ function App() {
     if (currentUser) {
       socket.auth = { userId: currentUser?.id };
       socket.connect();
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
     }
   }, [currentUser]);
+
+  window.onunload = () => localStorage.removeItem('currentUser');
 
   return (
     <BrowserRouter>
